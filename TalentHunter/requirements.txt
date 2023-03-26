@@ -3,3 +3,4 @@ psycopg2-binary
 email_validator
 Flask-SQLAlchemy
 Flask_WTF
+boto3

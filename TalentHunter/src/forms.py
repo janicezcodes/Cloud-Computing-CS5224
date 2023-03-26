@@ -29,4 +29,3 @@ class LoginAndRegisterForm(Form):
     email_reg = EmailField('Email', validators= [DataRequired(),Email()])
     password_reg = PasswordField('Password', validators = [DataRequired(), Length(min=8, max=20)])
     password_conf = PasswordField('Password', validators = [DataRequired(), Length(min=8, max=20)])
-

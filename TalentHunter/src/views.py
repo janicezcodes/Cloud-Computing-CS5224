@@ -4,6 +4,7 @@ from flask import request, session, redirect, url_for, render_template, flash, F
 from sqlalchemy import null
 import boto3
 
+
 from . models import Models
 from . forms import *
 
@@ -14,12 +15,31 @@ import os
 # from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
+import io
+from pdfminer.converter import TextConverter
+from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.pdfinterp import PDFResourceManager
+from pdfminer.pdfpage import PDFPage
+#Docx resume
+import docx2txt
+#Wordcloud
+import re
+import operator
+from nltk.tokenize import word_tokenize 
+from nltk.corpus import stopwords
+set(stopwords.words('english'))
+from wordcloud import WordCloud
+from nltk.probability import FreqDist
+import matplotlib.pyplot as plt
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 
 models = Models()
 
-# @app.route('/')
-# def index():
-#     return render_template('login.html')
+@app.route('/')
+def index():
+    return render_template('login_and_reg.html')
 
 
 @app.route('/login_and_reg', methods=['GET', 'POST'])
@@ -37,7 +57,7 @@ def login_and_reg():
             if em_login != None:
                 log = models.getCandidateByEmail(em_login)
                 if log.password == password_login:     # login
-                    session['current_user'] = em_login
+                    session['current_user_email'] = em_login
                     session['user_available'] = True
                     return redirect(url_for('upload_cv'))     
                 else:
@@ -57,17 +77,6 @@ def login_and_reg():
         return redirect(url_for('login_and_reg'))
 
 
-# @app.route('/upload_cv')
-# def upload_cv():
-    # try:
-    #     if session['user_available']:
-    #         booksAndRecords = models.getRecords()
-    #         return render_template('records.html', booksAndRecords=booksAndRecords)
-    #     flash('User is not Authenticated')
-    #     return redirect(url_for('index'))
-    # except Exception as e:
-    #     flash(str(e))
-
 
 # generate random id
 def generate_random_id(length):
@@ -77,9 +86,22 @@ def generate_random_id(length):
     return ''.join(random.choice(characters) for i in range(length))
 
 
+@app.route('/show_results')
+def show_results():
+    try:
+        if session['user_available']:
+            scores = models.getMatchScoresByJob()
+            return render_template('available_book.html', scores=scores)
+        flash('You are not an Authenticated User')
+        return redirect(url_for('login_and_reg'))
+    except Exception as e:
+        flash(str(e))
+        return redirect(url_for('login_and_reg'))
+
+
 
 # ---------------------------------------------------------------------------------
-# Set allowed extensions to allow only upload excel files
+# Set allowed extensions to allow only upload pdf files
 ALLOWED_EXTENSIONS = set(['pdf'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -90,6 +112,7 @@ def s3_upload_cv(file_name, bucket):
     s3_client = boto3.client('s3')
     response = s3_client.upload_file(file_name, bucket, object_name)
     return response
+
 
 
 @app.route('/upload_files_to_s3', methods=['GET', 'POST'])
@@ -124,6 +147,23 @@ def upload_files_to_s3():
 
                     # add session[current_user] and filename into postgreSQL, not create url
 
+
+                    # ---------------------------------------------------------------------------------
+                    # calculate the matching scores and save to the RDS
+                    resume = file_to_upload
+                    # get current user email
+                    candidate_email = session.get('current_user_email')
+                    candidate_id = models.getCandidateByEmail(candidate_email)
+
+                    jobs = models.getJobDescription()
+
+                    for job in jobs:
+                        full_jd = job.description.data + job.responsibilities.data + job.qualifications.data
+                        text = [resume, full_jd] 
+                        score = get_resume_score(text)
+                        models.addMatch({"candidate_id": candidate_id, "job_id": job.job_id.data, "score": score})
+                    # ---------------------------------------------------------------------------------
+
                     flash(f'Success - {file_to_upload} Is uploaded to {bucket_name}', 'success')
 
                 else:
@@ -148,5 +188,51 @@ def search_candidate():
     s3.download_file('BUCKET_NAME', 'OBJECT_NAME', 'FILE_NAME')
 
 
+
+
+
+###### To Do 这里用户需要选择title，然后去数据库查找，所以methods=['GET', 'POST']##########
+    session['user_available'] = True    # to generate results in the next page
+    session['search_title'] = title
+    return redirect(url_for('show_results'))
+
+
+
+
+# Read pdf file
+def read_pdf_resume(pdf_doc):
+    resource_manager = PDFResourceManager()
+    fake_file_handle = io.StringIO()
+    converter = TextConverter(resource_manager, fake_file_handle)
+    page_interpreter = PDFPageInterpreter(resource_manager, converter)
+    with open(pdf_doc, 'rb') as fh:
+        for page in PDFPage.get_pages(fh, caching=True,check_extractable=True):           
+            page_interpreter.process_page(page)     
+        text = fake_file_handle.getvalue() 
+    # close open handles      
+    converter.close() 
+    fake_file_handle.close() 
+    if text:     
+        return text
+    
+# Generate matching scores in percentage
+def get_resume_score(text):
+    cv = CountVectorizer(stop_words='english')
+    count_matrix = cv.fit_transform(text)
+    #Print the similarity scores
+    print("\nSimilarity Scores:")
+     
+    #get the match percentage
+    matchPercentage = cosine_similarity(count_matrix)[0][1] * 100
+    matchPercentage = round(matchPercentage, 2) # round to two decimal
+     
+    return matchPercentage
+
+
+
+
+
 if __name__ == '__main__':
     app.run()
+
+

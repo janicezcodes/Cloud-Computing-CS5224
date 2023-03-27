@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>About</title>
+
+	<link href="../src/static/show_results_css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="../src/static/show_results_css/bootstrap-theme.min.css">
+	<script src="../src/static/show_results_js/bootstrap.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="../src/static/show_results_css/styles.css">
+	<style type="text/css">
+		#us{
+        float: right;
+        margin-right: 20px;
+        margin-top: 10px;
+      }
+      #us h3{
+        margin: 0 0 0 0;
+      }
+      .ps{
+        width: 60%;
+        margin-top: 20px;
+        margin-left: 20%
+      }
+      #icon{
+        float: right;
+        margin-top: -15px;
+      }
+      #signout{
+        width: 100px;
+        height: 20px;
+      }
+      #signout a{
+        padding: 2px 0px 2px 20px;
+      }
+      li {
+        float:left;
+      }
+	</style>
+  </head>
+<body>
+
+<!-- {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <h3 class="flashes" align="center" style="color: #ae1313;">{{ message }}</h3>
+    {% endfor %}
+  {% endif %}
+{% endwith %} -->
+<div class="ps" >
+{% for s in scores %}
+<div class="panel panel-info" >
+  <div class="panel-heading">
+    <div><h3 class="panel-title" style="color: #efbd27;"> <i>Candidate{{i.name}}</i> for {{s.title}} (Job ID: {{s.job_id}})</h3></div>
+  </div>
+  <div class="panel-body" style="color: 212121;">
+    <p>Candidate Name: {{i.name}}</p>
+    <p>Email: {{i.Email}}</p>
+  </div>
+</div>
+{% endfor %}
+	
+</body>
+</html>

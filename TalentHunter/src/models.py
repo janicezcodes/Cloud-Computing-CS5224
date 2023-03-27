@@ -12,9 +12,6 @@ class Models:
             out = con.execute(text(statement), params)
         return out
 
-    # def addLibrarian(self, value):
-    #     return self.executeRawSql("""INSERT INTO Librarian(staff_code, email, password) VALUES(:staff_code, :email, :password);""", value)
-    
     def addCandidate(self, value):
         return self.executeRawSql("""INSERT INTO Candidate(candidate_id, name, email, password) VALUES(:candidate_id, :name, :email, :password);""", value)
     
@@ -28,9 +25,20 @@ class Models:
             raise Exception("User {} does not exist".format(email))
         return values[0]
     
+    def getJobDescription(self):
+        values = self.executeRawSql("""SELECT job_id, description, responsibilities, qualifications FROM Job;""").mappings().all()
+        if len(values) == 0:
+            raise Exception("No job positions now.")
+        return values
+    
+    def addMatch(self, value):
+        return self.executeRawSql("""INSERT INTO Match(candidate_id, job_id, score) VALUES(:candidate_id, :job_id, :score);""", value)
+    
 
-    def getMatches(self):
-        return self.executeRawSql("""SELECT * FROM Match LEFT JOIN Book ON Candidate.candidate_id = Match.candidate_id ORDER BY score DESC;""").mappings().all()
+    def getMatchScoresByJob(self, title):
+        return self.executeRawSql("""SELECT c.candidate_id, c.name, c.email, j.job_id, j.title, score FROM Candidate c, Job j, Match m WHERE c.candidate_id = m.candidate_id
+                                        AND j.job_id = m.job_id AND j.title = :title ORDER BY score DESC;""").mappings().all()
+
 
 
 

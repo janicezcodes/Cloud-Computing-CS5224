@@ -90,8 +90,9 @@ def generate_random_id(length):
 def show_results():
     try:
         if session['user_available']:
-            scores = models.getMatchScoresByJob()
-            return render_template('available_book.html', scores=scores)
+            title = session['search_title']
+            scores = models.getMatchScoresByTitle(title)
+            return render_template('show_results.html', scores=scores)
         flash('You are not an Authenticated User')
         return redirect(url_for('login_and_reg'))
     except Exception as e:
@@ -184,17 +185,17 @@ def search_candidate():
     4. get candidate selected
     5. display S3 file
     '''
-    s3 = boto3.client('s3')
-    s3.download_file('BUCKET_NAME', 'OBJECT_NAME', 'FILE_NAME')
+   
 
+    #  这里用户需要选择title，然后去数据库查找，所以methods=['GET', 'POST']
+    if request.method == 'POST': 
+        s3 = boto3.client('s3')
+        s3.download_file('BUCKET_NAME', 'OBJECT_NAME', 'FILE_NAME')
 
-
-
-
-###### To Do 这里用户需要选择title，然后去数据库查找，所以methods=['GET', 'POST']##########
-    session['user_available'] = True    # to generate results in the next page
-    session['search_title'] = title
-    return redirect(url_for('show_results'))
+        title = request.values.get('title')
+        session['user_available'] = True    # to generate results in the next page
+        session['search_title'] = title
+        return redirect(url_for('show_results'))
 
 
 

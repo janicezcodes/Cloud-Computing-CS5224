@@ -35,7 +35,7 @@ class Models:
         return self.executeRawSql("""INSERT INTO Match(candidate_id, job_id, score) VALUES(:candidate_id, :job_id, :score);""", value)
     
 
-    def getMatchScoresByJob(self, title):
+    def getMatchScoresByTitle(self, title):
         return self.executeRawSql("""SELECT c.candidate_id, c.name, c.email, j.job_id, j.title, score FROM Candidate c, Job j, Match m WHERE c.candidate_id = m.candidate_id
                                         AND j.job_id = m.job_id AND j.title = :title ORDER BY score DESC;""").mappings().all()
 

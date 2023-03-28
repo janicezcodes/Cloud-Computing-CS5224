@@ -120,9 +120,8 @@ def upload_files_to_s3():
                     bucket_name = "talenthunterbucket"
 
                     s3_upload_cv(file_name, bucket_name, file_name)
-                    # url = create_presigned_url(bucket_name, file_name)
-
-                    # add session[current_user] and filename into postgreSQL, not create url
+                    
+                    # add session[current_user] and filename into postgreSQL, not create url here
 
                     flash(f'Success - {file_to_upload} Is uploaded to {bucket_name}', 'success')
 
@@ -144,6 +143,8 @@ def search_candidate():
     4. get candidate selected
     5. display S3 file
     '''
+    # get filename and then create url to open request.get(url)
+    # url = create_presigned_url(bucket_name, file_name)
     s3 = boto3.client('s3')
     s3.download_file('BUCKET_NAME', 'OBJECT_NAME', 'FILE_NAME')
 

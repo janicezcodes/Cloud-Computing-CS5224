@@ -36,6 +36,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 
 models = Models()
+bucket_name = "talenthunterbucket"
 
 @app.route('/')
 def index():
@@ -115,7 +116,6 @@ def s3_upload_cv(file_name, bucket):
     return response
 
 
-
 @app.route('/upload_files_to_s3', methods=['GET', 'POST'])
 def upload_files_to_s3():
     try:
@@ -125,28 +125,20 @@ def upload_files_to_s3():
                 # No file selected
                 if 'file' not in request.files:  # what the ‘file' defined in our html
                     flash(f' *** No files Selected', 'danger')
-
                 file_to_upload = request.files['file']
-                # content_type = request.mimetype
-
                 # if empty files
                 if file_to_upload.filename == '':
                     flash(f' *** No files Selected', 'danger')
 
                 # file uploaded and check
                 if file_to_upload and allowed_file(file_to_upload.filename):
-
                     file_name = secure_filename(file_to_upload.filename)
-
                     print(f" *** The file name to upload is {file_name}")
                     print(f" *** The file full path  is {file_to_upload}")
 
-                    bucket_name = "talenthunterbucket"
-
                     s3_upload_cv(file_name, bucket_name, file_name)
-                    
-                    # add session[current_user] and filename into postgreSQL, not create url here
-
+                    # add email and filename into postgreSQL
+                    models.addS3File({"email": session.get('current_user_email'), "file_name": file_name})
 
                     # ---------------------------------------------------------------------------------
                     # calculate the matching scores and save to the RDS
@@ -175,21 +167,12 @@ def upload_files_to_s3():
 
 
 # ------------------------------------------------------------------------------------------
-@app.route('/search_candidate', methods=['GET', 'POST'])
+@app.route('/search', methods=['GET', 'POST'])
 def search_candidate():
-    '''
-    1. get selected job
-    2. sql query
-    3. return result
-    4. get candidate selected
-    5. display S3 file
-    '''
+    ''' get selected job'''
    
-
     #  这里用户需要选择title，然后去数据库查找，所以methods=['GET', 'POST']
     if request.method == 'POST': 
-        s3 = boto3.client('s3')
-        s3.download_file('BUCKET_NAME', 'OBJECT_NAME', 'FILE_NAME')
 
         title = request.values.get('title')
         session['user_available'] = True    # to generate results in the next page
@@ -197,6 +180,28 @@ def search_candidate():
         return redirect(url_for('show_results'))
 
 
+# ------------------------------------------------------------------------------------------
+@app.route('/show_results', methods=['GET', 'POST'])
+def show_results():
+    '''
+    1. sql query
+    2. return result
+    3. get candidate selected
+    4. display S3 file
+    '''
+    models.getMatchScoresByTitle(session.get('search_title'))
+    # how to display on show_results.html
+
+    # when click the candidate, view the CV
+    file_name = models.getS3FileName(session.get('current_user_email'))
+    view_cv_pdf(file_name)
+
+
+def view_cv_pdf(file_name):
+     # Replace <bucket-name> and <pdf-file-name> with your own values
+    s3 = boto3.client('s3')
+    url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': file_name+'.pdf'}, ExpiresIn=3600)
+    return redirect(url)
 
 
 # Read pdf file
@@ -227,8 +232,6 @@ def get_resume_score(text):
     matchPercentage = round(matchPercentage, 2) # round to two decimal
      
     return matchPercentage
-
-
 
 
 

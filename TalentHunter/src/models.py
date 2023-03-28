@@ -15,6 +15,15 @@ class Models:
     def addCandidate(self, value):
         return self.executeRawSql("""INSERT INTO Candidate(candidate_id, name, email, password) VALUES(:candidate_id, :name, :email, :password);""", value)
     
+    def addS3File(self, value):
+        return self.executeRawSql("""INSERT INTO S3Files(email, file_name) VALUES(:email, :file_name);""", value)
+    
+    def getS3FileName(self, email):
+        values = self.executeRawSql("""SELECT file_name FROM S3Files WHERE email=:email;""", {"email": email}).mappings().all()
+        if len(values) == 0:
+            raise Exception("CV file {} does not exist".format(email))
+        return values[0]
+    
     def addJob(self, value):
         return self.executeRawSql("""INSERT INTO Job(job_id, title, post_date, job_type, description, responsibilities, quelifications) VALUES(:job_id, :title, :post_date, :job_type, :description, :responsibilities, :quelifications);""", value)
     
@@ -42,7 +51,6 @@ class Models:
 
 
 
-
     def createModels(self):
         self.executeRawSql(
             """CREATE TABLE IF NOT EXISTS Candidate ( 
@@ -50,6 +58,13 @@ class Models:
                 name VARCHAR(64) NOT NULL, 
                 email VARCHAR(64) UNIQUE NOT NULL, 
                 password VARCHAR(20) NOT NULL
+            ); 
+            """)
+        
+        self.executeRawSql(
+            """CREATE TABLE IF NOT EXISTS S3Files ( 
+                email VARCHAR(64) UNIQUE NOT NULL, 
+                file_name VARCHAR(64) NOT NULL, 
             ); 
             """)
         

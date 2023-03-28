@@ -1,22 +1,20 @@
 
 from flask_wtf import Form
-from wtforms import StringField, SubmitField, PasswordField, BooleanField, EmailField, DateField
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, EmailField, DateField, SelectMultipleField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, ValidationError, Optional
 
 
-# def length_check(form,field):
-#     if len(field.data) != 12:
-#         raise ValidationError('Fields is in wrong format.')
-    
 
-# class AddRecordForm(Form):
-#     record_num = StringField('Record No', validators=[DataRequired(), length_check])
-#     ic = StringField('IC', validators=[DataRequired(), length_check])
-#     book_code = StringField('Book Code', validators=[DataRequired(), length_check])
-#     library_code = StringField('Library Code', validators=[DataRequired(), length_check])
-#     borrowed_date = DateField('Borrowed Date', validators = [DataRequired("Date is required")])
-#     availability = BooleanField('Book available?')
-#     submit = SubmitField('Submit')
+###########TO DO: change the choices to be updated with the database
+class SearchForm(Form):
+    title = SelectMultipleField(
+        label='标签', choices=[('Account_Manager', 'Account Manager'), ('Business Analyst', 'Business Analyst'), ('Data Analyst', 'Data Analyst'),])
+    submit = SubmitField(label='Submit')
+
+
+
+
+
     
 
 class LoginAndRegisterForm(Form):

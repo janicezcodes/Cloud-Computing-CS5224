@@ -87,21 +87,6 @@ def generate_random_id(length):
     return ''.join(random.choice(characters) for i in range(length))
 
 
-@app.route('/show_results')
-def show_results():
-    try:
-        if session['user_available']:
-            title = session['search_title']
-            scores = models.getMatchScoresByTitle(title)
-            return render_template('show_results.html', scores=scores)
-        flash('You are not an Authenticated User')
-        return redirect(url_for('login_and_reg'))
-    except Exception as e:
-        flash(str(e))
-        return redirect(url_for('login_and_reg'))
-
-
-
 # ---------------------------------------------------------------------------------
 # Set allowed extensions to allow only upload pdf files
 ALLOWED_EXTENSIONS = set(['pdf'])
@@ -155,7 +140,6 @@ def upload_files_to_s3():
                         score = get_resume_score(text)
                         models.addMatch({"candidate_id": candidate_id, "job_id": job.job_id.data, "score": score})
                     # ---------------------------------------------------------------------------------
-
                     flash(f'Success - {file_to_upload} Is uploaded to {bucket_name}', 'success')
 
                 else:
@@ -173,7 +157,6 @@ def search_candidate():
    
     #  这里用户需要选择title，然后去数据库查找，所以methods=['GET', 'POST']
     if request.method == 'POST': 
-
         title = request.values.get('title')
         session['user_available'] = True    # to generate results in the next page
         session['search_title'] = title
@@ -181,7 +164,8 @@ def search_candidate():
 
 
 # ------------------------------------------------------------------------------------------
-@app.route('/show_results', methods=['GET', 'POST'])
+
+@app.route('/show_results')
 def show_results():
     '''
     1. sql query
@@ -189,19 +173,24 @@ def show_results():
     3. get candidate selected
     4. display S3 file
     '''
-    models.getMatchScoresByTitle(session.get('search_title'))
-    # how to display on show_results.html
-
-    # when click the candidate, view the CV
-    file_name = models.getS3FileName(session.get('current_user_email'))
-    view_cv_pdf(file_name)
-
-
-def view_cv_pdf(file_name):
-     # Replace <bucket-name> and <pdf-file-name> with your own values
-    s3 = boto3.client('s3')
-    url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': file_name+'.pdf'}, ExpiresIn=3600)
-    return redirect(url)
+    try:
+        if session['user_available']:
+            title = session['search_title']
+            candidates_log = models.getMatchScoresByTitle(title)
+            candidates_show = []
+            s3 = boto3.client('s3')
+            for log in candidates_log:
+                candidate_email = log.email
+                file_name = models.getS3FileName(candidate_email)
+                url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': file_name+'.pdf'}, ExpiresIn=3600)
+                log['s3_url'] = url
+                candidates_show.append(log)
+            return render_template('show_results.html', scores=candidates_show)
+        flash('You are not an Authenticated User')
+        return redirect(url_for('login_and_reg'))
+    except Exception as e:
+        flash(str(e))
+        return redirect(url_for('login_and_reg'))
 
 
 # Read pdf file

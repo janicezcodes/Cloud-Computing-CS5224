@@ -16,6 +16,7 @@ import os
 from werkzeug.utils import secure_filename
 
 import io
+import pdfminer
 from pdfminer.converter import TextConverter
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfinterp import PDFResourceManager
@@ -173,6 +174,7 @@ def show_results():
     3. get candidate selected
     4. display S3 file
     '''
+<<<<<<< HEAD
     try:
         if session['user_available']:
             title = session['search_title']
@@ -191,6 +193,22 @@ def show_results():
     except Exception as e:
         flash(str(e))
         return redirect(url_for('login_and_reg'))
+=======
+    log = models.getMatchScoresByTitle(session.get('search_title'))
+    # how to display on show_results.html
+    # log[i].email
+
+    # when click the candidate, view the CV
+    file_name = models.getS3FileName(session.get('current_user_email'))
+    view_cv_pdf(file_name)
+
+
+def view_cv_pdf(file_name):
+     # Replace <bucket-name> and <pdf-file-name> with your own values
+    s3 = boto3.client('s3')
+    url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': file_name+'.pdf'}, ExpiresIn=3600)
+    return redirect(url)
+>>>>>>> e2a2a16a914879848ee2289fe8af202468853109
 
 
 # Read pdf file

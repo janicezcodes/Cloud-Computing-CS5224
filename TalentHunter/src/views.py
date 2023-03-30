@@ -16,6 +16,7 @@ import os
 from werkzeug.utils import secure_filename
 
 import io
+import pdfminer
 from pdfminer.converter import TextConverter
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfinterp import PDFResourceManager
@@ -189,8 +190,9 @@ def show_results():
     3. get candidate selected
     4. display S3 file
     '''
-    models.getMatchScoresByTitle(session.get('search_title'))
+    log = models.getMatchScoresByTitle(session.get('search_title'))
     # how to display on show_results.html
+    # log[i].email
 
     # when click the candidate, view the CV
     file_name = models.getS3FileName(session.get('current_user_email'))

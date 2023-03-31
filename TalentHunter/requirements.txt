@@ -4,3 +4,6 @@ email_validator
 Flask-SQLAlchemy
 Flask_WTF
 boto3
+pdfminer
+nltk
+scikit-learn

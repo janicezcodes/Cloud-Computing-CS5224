@@ -1,4 +1,4 @@
-#!/Users/apple/Documents/CS5242Flask/Mar30/CS5224-TalentHunter/TalentHunter/.venv/bin/python
+#!/Users/apple/Documents/CS5224Flask/CS5224-TalentHunter/TalentHunter/.venv/bin/python
 
 import sys
 import json

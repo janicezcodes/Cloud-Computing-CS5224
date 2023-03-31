@@ -1,10 +1,19 @@
+# import sys
+# # if there are no conflicting packages in the default Python Libs =>
+# sys.path.append("/usr/home/username/pdfminer")
+
+
+
 import random
 import string
 from flask import request, session, redirect, url_for, render_template, flash, Flask
 from sqlalchemy import null
 import boto3
 
-
+import nltk
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
 from . models import Models
 from . forms import *
 
@@ -22,16 +31,16 @@ from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfpage import PDFPage
 #Docx resume
-import docx2txt
+# import docx2txt
 #Wordcloud
 import re
 import operator
 from nltk.tokenize import word_tokenize 
 from nltk.corpus import stopwords
 set(stopwords.words('english'))
-from wordcloud import WordCloud
+# from wordcloud import WordCloud
 from nltk.probability import FreqDist
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -174,7 +183,6 @@ def show_results():
     3. get candidate selected
     4. display S3 file
     '''
-<<<<<<< HEAD
     try:
         if session['user_available']:
             title = session['search_title']
@@ -193,22 +201,6 @@ def show_results():
     except Exception as e:
         flash(str(e))
         return redirect(url_for('login_and_reg'))
-=======
-    log = models.getMatchScoresByTitle(session.get('search_title'))
-    # how to display on show_results.html
-    # log[i].email
-
-    # when click the candidate, view the CV
-    file_name = models.getS3FileName(session.get('current_user_email'))
-    view_cv_pdf(file_name)
-
-
-def view_cv_pdf(file_name):
-     # Replace <bucket-name> and <pdf-file-name> with your own values
-    s3 = boto3.client('s3')
-    url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': file_name+'.pdf'}, ExpiresIn=3600)
-    return redirect(url)
->>>>>>> e2a2a16a914879848ee2289fe8af202468853109
 
 
 # Read pdf file

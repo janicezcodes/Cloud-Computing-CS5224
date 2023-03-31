@@ -29,7 +29,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/apple/Documents/CS5242Flask/Mar30/CS5224-TalentHunter/TalentHunter/.venv"
+set -gx VIRTUAL_ENV "/Users/apple/Documents/CS5224Flask/CS5224-TalentHunter/TalentHunter/.venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH

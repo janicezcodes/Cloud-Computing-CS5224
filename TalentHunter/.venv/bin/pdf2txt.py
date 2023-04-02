@@ -1,4 +1,4 @@
-#!/Users/apple/Documents/CS5224Flask/CS5224-TalentHunter/TalentHunter/.venv/bin/python
+#!/Users/zhengyufei/Desktop/2022 NUS Sem4/CS5224/Group Project/CS5224-TalentHunter/TalentHunter/.venv/bin/python3
 import sys
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser

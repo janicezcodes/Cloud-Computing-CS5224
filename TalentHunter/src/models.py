@@ -4,7 +4,17 @@ import os
 
 class Models:
     def __init__(self):
-        self.engine = create_engine(os.environ.get('DB_URL', 'postgresql://Kaylana:1234@localhost:5432/LibrarySys'))
+        # self.engine = create_engine(os.environ.get('DB_URL', 'postgresql://talenthunter:talenthunter1234@talenthunterdatabase.c01ff5x6d7j6.us-east-1.rds.amazonaws.com'))
+        # replace the values below with your own AWS PostgreSQL database credentials
+        DB_USER = 'talenthunter'
+        DB_PASSWORD = 'talenthunter1234'
+        DB_HOST = 'talenthunterdatabase.c01ff5x6d7j6.us-east-1.rds.amazonaws.com'
+        DB_PORT = '5432'
+        DB_NAME = 'talenthunterdatabase'
+
+        # create the database URI in the format postgresql://user:password@host:port/database_name
+        DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+        self.engine = create_engine(DATABASE_URI)
 
     def executeRawSql(self, statement, params={}):
         out = None
@@ -50,7 +60,6 @@ class Models:
 
 
 
-
     def createModels(self):
         self.executeRawSql(
             """CREATE TABLE IF NOT EXISTS Candidate ( 
@@ -64,7 +73,7 @@ class Models:
         self.executeRawSql(
             """CREATE TABLE IF NOT EXISTS S3Files ( 
                 email VARCHAR(64) PRIMARY KEY, 
-                file_name VARCHAR(64) NOT NULL, 
+                file_name VARCHAR(64) NOT NULL 
             ); 
             """)
         

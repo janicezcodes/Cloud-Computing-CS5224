@@ -1,4 +1,6 @@
-#!/Users/apple/Documents/CS5224Flask/CS5224-TalentHunter/TalentHunter/.venv/bin/python
+#!/bin/sh
+'''exec' "/Users/zhengyufei/Desktop/2022 NUS Sem4/CS5224/Group Project/CS5224-TalentHunter/TalentHunter/.venv/bin/python3" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys

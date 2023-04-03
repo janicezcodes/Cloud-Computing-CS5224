@@ -119,3 +119,6 @@ INSERT INTO Job VALUES ('P11111117', 'Sales','2023/03/22', 'full-time','New Busi
 - Proven track record of exceeding performance targets.
 - Previous experience in sales or business development.
 - Proficient with sales prospecting tactics and technologies.');
+
+
+INSERT INTO Candidate VALUES ('111111111', 'kln', 'kln@gmail.com', '12345678');

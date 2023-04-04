@@ -2,11 +2,11 @@
 if [ -d ".venv" ]
 then
     source .venv/bin/activate
-    python app.py
+    python3 app.py
 else
-    python -m venv .venv
+    python3 -m venv .venv
     source .venv/bin/activate
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-    python app.py
+    python3 -m pip install --upgrade pip
+    pip3 install -r requirements.txt
+    python3 app.py
 fi

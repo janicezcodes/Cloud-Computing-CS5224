@@ -53,11 +53,11 @@
 									<form id="login-form" action="" method="POST" role="form" style="display: block;">
 										<div class="form-group">
 											<label class="icon-lp"><i class="fas fa-user-tie"></i></label>
-											<input type="text" name="username" id="username" tabindex="1" class="form-control" placeholder="Username" value="" required="">
+											<input type="email" name="log-email" id="log-email" tabindex="1" class="form-control" placeholder="Email Address" value="" required="">
 										</div>
 										<div class="form-group">
 											<label class="icon-lp"><i class="fas fa-key"></i></label>
-											<input type="password" name="password" id="password" tabindex="2" class="form-control" placeholder="Password" required="">
+											<input type="password" name="password" id="password" tabindex="2" class="form-control" placeholder="Password" value="" required="">
 										</div>
 										<div class="che-box">
 											<label class="checkbox-in">
@@ -82,18 +82,25 @@
 											</div>
 										</div>
 									</form>
+									{% for message in get_flashed_messages() %}
+										{% if message %}
+											{{message}}
+										{% endif %}
+									{% endfor %}
+								
+
 									<form id="register-form" action="" method="POST" role="form" style="display: none;">
 										<div class="form-group">
 											<label class="icon-lp"><i class="fas fa-user-tie"></i></label>
-											<input type="text" name="username" id="username" tabindex="1" class="form-control" placeholder="Username" value="" required="">
+											<input type="text" name="reg-username" id="username" tabindex="1" class="form-control" placeholder="Username" value="" required="">
 										</div>
 										<div class="form-group">
 											<label class="icon-lp"><i class="fas fa-envelope"></i></label>
-											<input type="email" name="email" id="email" tabindex="1" class="form-control" placeholder="Email Address" value="" required="">
+											<input type="email" name="reg-email" id="reg-email" tabindex="1" class="form-control" placeholder="Email Address" value="" required="">
 										</div>
 										<div class="form-group">
 											<label class="icon-lp"><i class="fas fa-key"></i></label>
-											<input type="password" name="password" id="password" tabindex="2" class="form-control" placeholder="Password" required="">
+											<input type="password" name="new-password" id="password" tabindex="2" class="form-control" placeholder="Password" required="">
 										</div>
 										<div class="form-group">
 											<label class="icon-lp"><i class="fas fa-key"></i></label>
@@ -105,7 +112,7 @@
 												<input name="checkbox" type="checkbox"> <span></span>I agree to the <a href="#"> Terms and Conditions </a> and <a href="#">Privacy Policy </a>
 											</label>
 										</div>
-										
+
 										<div class="form-group">
 											<div class="row">
 												<div class="col-sm-6 offset-sm-3">
@@ -114,6 +121,11 @@
 											</div>
 										</div>										
 									</form>
+									{% for message in get_flashed_messages() %}
+										{% if message %}
+											{{message}}
+										{% endif %}
+									{% endfor %}
 								</div>
 							</div>
 						</div>

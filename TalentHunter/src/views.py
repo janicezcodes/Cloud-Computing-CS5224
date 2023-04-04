@@ -4,6 +4,15 @@ from flask import request, session, redirect, url_for, render_template, flash, F
 import boto3
 
 import nltk
+import ssl
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -39,71 +48,52 @@ bucket_name = "talenthunterbucket"
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    register_form = RegisterForm()
-    login_form = LoginForm()
-    return render_template('login_and_reg.html', register_form=register_form, login_form=login_form)
+    if request.method == 'GET':
+        return render_template('login_and_reg.html')
+    
+    elif request.method == 'POST':  
+        try:
+            #login
+            print(request.form)
+            if len(request.form)==3:
+                em_login = request.form['log-email']
+                print('em_login', em_login)
+                password_login = request.form['password']
+                log = models.getCandidateByEmail(em_login)
+                if em_login == 'admin@gmail.com' and password_login == log.password:
+                    return redirect(url_for('search_candidate')) 
+                elif password_login == log.password:     
+                    session['current_user_email'] = em_login
+                    session['user_available'] = True
+                    return redirect(url_for('upload_files_to_s3'))  
+                else:
+                    flash('Cannot sign in. Email or password is wrong.')
+                    return redirect(url_for('index'))
 
+            # register
+            elif len(request.form)==5:
+                newname = request.form['reg-username']
+                email_reg = request.form['reg-email']
+                password_reg = request.form['new-password']
+                password_conf = request.form['confirm-password']
+                
+                if password_reg and password_reg == password_conf:
+                    models.addCandidate({"candidate_id": generate_random_id(9),
+                                        "name": newname,
+                                        "email":email_reg, 
+                                        "password": password_reg})
+                    flash('Register successfully. Please login.')
+                    return redirect(url_for('index'))
+                else:
+                    flash('Fill in the correct password.')
+                    return render_template('login_and_reg.html', RegisterForm=request.form)
 
-
-@app.route('/register', methods=['GET','POST'])
-def register():
-    register_form = RegisterForm()
-    login_form = LoginForm()
-
-    newname = register_form.name.data
-    email_reg = register_form.email_reg.data
-    password_reg = register_form.password_reg.data
-    password_conf = register_form.password_conf.data
-
-    if request.method == 'POST':  
-        if password_reg == password_conf:
-            models.addCandidate({"candidate_id": generate_random_id(9),
-                                 "name": newname,
-                                 "email":email_reg, 
-                                 "password": password_reg})
-            flash('Register successfully. Please login.')
-            return redirect(url_for('index'))
-        else:
-            flash('Passwords are not same.')
-            return redirect(url_for('index'))
-            # return render_template('login_and_reg.html', register_form=register_form, login_form=login_form)
-    return render_template('login_and_reg.html', register_form=register_form, login_form=login_form)
+            return render_template('login_and_reg.html')
+        except Exception as e:
+            flash(str(e))
+            return render_template('login_and_reg.html') 
         
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    register_form = RegisterForm()
-    login_form = LoginForm()
-
-    # if request.method == 'POST': 
-    #     session['user_available'] = True 
-    #     return redirect(url_for('upload_files_to_s3'))  
-    # return render_template('login_and_reg.html', register_form=register_form, login_form=login_form)
-
-
-    try:
-        if request.method == 'POST':  
-            em_login = login_form.email_login.data
-            password_login = login_form.password_login.data 
-
-            log = models.getCandidateByEmail(em_login)
-            if log.password == password_login:     # login
-                session['current_user_email'] = em_login
-                session['user_available'] = True
-                return redirect(url_for('upload_files_to_s3'))  
-            else:
-                flash('Cannot sign in. Email or password is wrong.')
-        return render_template('login_and_reg.html', register_form=register_form, login_form=login_form)
-    except Exception as e:
-        flash(str(e))
-        return redirect(url_for('index'))
-        # return redirect(url_for('upload_files_to_s3')) 
-
-
-
-
-
+        
 # generate random id
 def generate_random_id(length):
     # 字母和数字的组合
@@ -126,7 +116,7 @@ def s3_upload_cv(file_name, bucket):
     return response
 
 
-@app.route('/upload_files_to_s3', methods=['GET', 'POST'])
+@app.route('/upload', methods=['GET', 'POST'])
 def upload_files_to_s3():
     try:
         if session['user_available']:
@@ -167,8 +157,7 @@ def upload_files_to_s3():
                     flash(f'Success - {file_to_upload} Is uploaded to {bucket_name}', 'success')
 
                 else:
-                    flash(f'Allowed file type is pdf.Please upload proper formats...', 'danger')
-            
+                    flash(f'Allowed file type is pdf.Please upload proper formats...', 'danger')   
         return render_template('upload.html')
         # return redirect(url_for('index'))
     except Exception as e:
@@ -187,6 +176,7 @@ def search_candidate():
         session['user_available'] = True    # to generate results in the next page
         session['search_title'] = title
         return redirect(url_for('show_results'))
+    return render_template('search.html')
 
 
 # ------------------------------------------------------------------------------------------
@@ -252,5 +242,3 @@ def get_resume_score(text):
 
 if __name__ == '__main__':
     app.run()
-
-

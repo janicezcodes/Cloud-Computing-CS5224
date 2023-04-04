@@ -17,7 +17,8 @@ def readDbFile(filename, models):
                 # Try to execute statement and commit it
                 try:
                     print(sqlCommand)
-                    models.executeRawSql(sqlCommand)
+                    log = models.executeRawSql(sqlCommand)
+                    print('log', log)
 
                 # Assert in case of error
                 except:

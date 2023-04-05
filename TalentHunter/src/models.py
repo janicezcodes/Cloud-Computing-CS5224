@@ -1,16 +1,22 @@
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 import os
+import psycopg2
 
 class Models:
     def __init__(self):
         # self.engine = create_engine(os.environ.get('DB_URL', 'postgresql://kln:1234@localhost:5432/th'))
         # replace the values below with your own AWS PostgreSQL database credentials
-        DB_USER = 'talenthunter'
-        DB_PASSWORD = 'talenthunter1234'
-        DB_HOST = 'talenthunterdatabase.c01ff5x6d7j6.us-east-1.rds.amazonaws.com'
+        # DB_USER = 'talenthunter'
+        # DB_PASSWORD = 'talenthunter1234'
+        # DB_HOST = 'talenthunterdatabase.c01ff5x6d7j6.us-east-1.rds.amazonaws.com'
+        # DB_PORT = '5432'
+        # DB_NAME = 'talenthunterdatabase'
+        DB_USER = 'kln'
+        DB_PASSWORD = '12345678!'
+        DB_HOST = 'th.cfbp1vodyghp.us-east-1.rds.amazonaws.com'
         DB_PORT = '5432'
-        DB_NAME = 'talenthunterdatabase'
+        DB_NAME = 'th'
 
         # create the database URI in the format postgresql://user:password@host:port/database_name
         DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
@@ -19,7 +25,9 @@ class Models:
     def executeRawSql(self, statement, params={}):
         out = None
         with self.engine.connect() as con:
+            trans = con.begin()
             out = con.execute(text(statement), params)
+            trans.commit()
         return out
 
     def addCandidate(self, value):
@@ -51,54 +59,55 @@ class Models:
         return values
     
     def addMatch(self, value):  
-        self.executeRawSql( 
-            """CREATE TABLE IF NOT EXISTS Match ( 
-                candidate_id VARCHAR(9) REFERENCES Candidate(candidate_id) 
-                    ON UPDATE CASCADE ON DELETE CASCADE 
-                    DEFERRABLE INITIALLY DEFERRED,
-                job_id VARCHAR(9) REFERENCES Job(job_id) 
-                    ON UPDATE CASCADE ON DELETE CASCADE 
-                    DEFERRABLE INITIALLY DEFERRED, 
-                score NUMERIC NOT NULL, 
-                PRIMARY KEY(candidate_id, job_id)
-             ); 
-             """)
-  
         return self.executeRawSql("""INSERT INTO Match(candidate_id, job_id, score) VALUES(:candidate_id, :job_id, :score);""", value)
     
 
     def getMatchScoresByTitle(self, title):
         return self.executeRawSql("""SELECT c.candidate_id, c.name, c.email, j.job_id, j.title, score FROM Candidate c, Job j, Match m WHERE c.candidate_id = m.candidate_id
                                         AND j.job_id = m.job_id AND j.title = :title ORDER BY score DESC LIMIT 10;""",{"title": title}).mappings().all()
+
+
     
 
+    # def createModels(self):
+    #     self.executeRawSql(
+    #         """CREATE TABLE IF NOT EXISTS Candidate ( 
+    #             candidate_id VARCHAR(9) PRIMARY KEY, 
+    #             name VARCHAR(64) NOT NULL, 
+    #             email VARCHAR(64) UNIQUE NOT NULL, 
+    #             password VARCHAR(20) NOT NULL
+    #         ); 
+    #         """)
+        
+    #     self.executeRawSql(
+    #         """CREATE TABLE IF NOT EXISTS S3Files ( 
+    #             email VARCHAR(64) PRIMARY KEY, 
+    #             file_name VARCHAR(64) NOT NULL 
+    #         ); 
+    #         """)
+        
+    #     self.executeRawSql(
+    #         """CREATE TABLE IF NOT EXISTS Job (
+    #             job_id VARCHAR(9) PRIMARY KEY, 
+    #             title VARCHAR(64) NOT NULL, 
+    #             post_date DATE NOT NULL,
+    #             job_type VARCHAR(9) NOT NULL,
+    #             description TEXT NOT NULL,
+    #             responsibilities TEXT NOT NULL,
+    #             qualifications TEXT NOT NULL
+    #         );
+    #         """)
 
-    def createModels(self):
-        self.executeRawSql(
-            """CREATE TABLE IF NOT EXISTS Candidate ( 
-                candidate_id VARCHAR(9) PRIMARY KEY, 
-                name VARCHAR(64) NOT NULL, 
-                email VARCHAR(64) UNIQUE NOT NULL, 
-                password VARCHAR(20) NOT NULL
-            ); 
-            """)
-        
-        self.executeRawSql(
-            """CREATE TABLE IF NOT EXISTS S3Files ( 
-                email VARCHAR(64) PRIMARY KEY, 
-                file_name VARCHAR(64) NOT NULL 
-            ); 
-            """)
-        
-        # self.executeRawSql(
-        #     """CREATE TABLE IF NOT EXISTS Job (
-        #         job_id VARCHAR(9) PRIMARY KEY, 
-        #         title VARCHAR(64) NOT NULL, 
-        #         post_date DATE NOT NULL,
-        #         job_type VARCHAR(9) NOT NULL,
-        #         description TEXT NOT NULL,
-        #         responsibilities TEXT NOT NULL,
-        #         qualifications TEXT NOT NULL
-        #     );
-        #     """)
+    #     self.executeRawSql( 
+    #         """CREATE TABLE IF NOT EXISTS Match ( 
+    #             candidate_id VARCHAR(9) REFERENCES Candidate(candidate_id) 
+    #                 ON UPDATE CASCADE ON DELETE CASCADE 
+    #                 DEFERRABLE INITIALLY DEFERRED,
+    #             job_id VARCHAR(9) REFERENCES Job(job_id) 
+    #                 ON UPDATE CASCADE ON DELETE CASCADE 
+    #                 DEFERRABLE INITIALLY DEFERRED, 
+    #             score NUMERIC NOT NULL, 
+    #             PRIMARY KEY(candidate_id, job_id)
+    #          ); 
+    #          """)
         

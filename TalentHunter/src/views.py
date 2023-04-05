@@ -46,6 +46,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 models = Models()
 bucket_name = "talenthunterbucket"
 
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
@@ -59,6 +60,7 @@ def index():
                 em_login = request.form['log-email']
                 print('em_login', em_login)
                 password_login = request.form['password']
+                
                 log = models.getCandidateByEmail(em_login)
                 if em_login == 'admin@gmail.com' and password_login == log.password:
                     return redirect(url_for('search_candidate')) 
@@ -109,24 +111,40 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # upload file to S3 bucket
-def s3_upload_cv(file_name, bucket):
-    object_name = file_name
+def s3_upload_cv(file_to_upload, bucket, file_name, content_type):
     s3_client = boto3.client('s3')
-    response = s3_client.upload_file(file_name, bucket, object_name)
-    return response
+    print('s3_client created')
+    try:
+        print('try upload s3')
+        response = s3_client.put_object(Body=file_to_upload,
+                                                Bucket=bucket,
+                                                Key=file_name,
+                                                ContentType=content_type)
+        #upload_file(file_to_upload, bucket, file_name)
+        print('after trying upload s3')
+        print(f" ** Response - {response}")
+    except Exception as e:
+        print('Error in uploading to s3, ', e)
 
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_files_to_s3():
     try:
         if session['user_available']:
-            if request.method == 'POST':
+            print('user_available')
+            if request.method == 'GET':
+                return render_template('upload.html')
+            elif request.method == 'POST':
+                print('file uploaded', request.files)
                 # No file selected
-                if 'file' not in request.files:  # what the ‘file' defined in our html
+                if 'fileselect[]' not in request.files:  # what the ‘file' defined in our html
                     flash(f' *** No files Selected', 'danger')
-                file_to_upload = request.files['file']
+                file_to_upload = request.files['fileselect[]']
+                content_type = request.mimetype
+                print('file_to_upload', file_to_upload)
+                print('file_name', file_to_upload.filename)
                 # if empty files
-                if file_to_upload.filename == '':
+                if not file_to_upload.filename:
                     flash(f' *** No files Selected', 'danger')
 
                 # file uploaded and check
@@ -135,18 +153,19 @@ def upload_files_to_s3():
                     print(f" *** The file name to upload is {file_name}")
                     print(f" *** The file full path  is {file_to_upload}")
 
-                    s3_upload_cv(file_name, bucket_name, file_name)
+                    s3_upload_cv(file_to_upload, bucket_name, file_name, content_type)
                     # add email and filename into postgreSQL
-                    models.addS3File({"email": session.get('current_user_email'), "file_name": file_name})
+                    models.addS3File({"email": session.get('current_user_email'), "file_name": file_name}) #uncomment to use sql 
 
                     # ---------------------------------------------------------------------------------
                     # calculate the matching scores and save to the RDS
                     resume = file_to_upload
                     # get current user email
                     candidate_email = session.get('current_user_email')
-                    candidate_id = models.getCandidateByEmail(candidate_email)
+                    #uncomment below to use sql 
+                    candidate_id = models.getCandidateByEmail(candidate_email) 
 
-                    jobs = models.getJobDescription()
+                    jobs = models.getJobDescription() 
 
                     for job in jobs:
                         full_jd = job.description.data + job.responsibilities.data + job.qualifications.data
@@ -158,11 +177,9 @@ def upload_files_to_s3():
 
                 else:
                     flash(f'Allowed file type is pdf.Please upload proper formats...', 'danger')   
-        return render_template('upload.html')
-        # return redirect(url_for('index'))
     except Exception as e:
         flash(str(e))
-        return redirect(url_for('index'))
+        return redirect(url_for('upload_files_to_s3'))
 
 
 # ------------------------------------------------------------------------------------------

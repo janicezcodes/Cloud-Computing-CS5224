@@ -177,6 +177,7 @@ def upload_files_to_s3():
 
                 else:
                     flash(f'Allowed file type is pdf.Please upload proper formats...', 'danger')   
+        return render_template('upload.html')    
     except Exception as e:
         flash(str(e))
         return redirect(url_for('upload_files_to_s3'))
@@ -211,7 +212,9 @@ def show_results():
             title = session['search_title']
             candidates_log = models.getMatchScoresByTitle(title)
             candidates_show = []
-            s3 = boto3.client('s3')
+            # s3 = boto3.client('s3')
+            s3 = boto3.client("th-s3", aws_access_key_id=os.getenv('AWS_ACCESS_KEY'), aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
+
             for log in candidates_log:
                 candidate_email = log.email
                 file_name = models.getS3FileName(candidate_email)

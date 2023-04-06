@@ -68,6 +68,7 @@ class Models:
 
 
     
+<<<<<<< HEAD
     def createModels(self):
         self.createCandidate()
         self.createS3Files()
@@ -119,4 +120,48 @@ class Models:
                 PRIMARY KEY(candidate_id, job_id)
              ); 
              """)
+=======
+
+    # def createModels(self):
+    #     self.executeRawSql(
+    #         """CREATE TABLE IF NOT EXISTS Candidate ( 
+    #             candidate_id VARCHAR(9) PRIMARY KEY, 
+    #             name VARCHAR(64) NOT NULL, 
+    #             email VARCHAR(64) UNIQUE NOT NULL, 
+    #             password VARCHAR(20) NOT NULL
+    #         ); 
+    #         """)
+        
+    #     self.executeRawSql(
+    #         """CREATE TABLE IF NOT EXISTS S3Files ( 
+    #             email VARCHAR(64) PRIMARY KEY, 
+    #             file_name VARCHAR(64) NOT NULL 
+    #         ); 
+    #         """)
+        
+    #     self.executeRawSql(
+    #         """CREATE TABLE IF NOT EXISTS Job (
+    #             job_id VARCHAR(9) PRIMARY KEY, 
+    #             title VARCHAR(64) NOT NULL, 
+    #             post_date DATE NOT NULL,
+    #             job_type VARCHAR(9) NOT NULL,
+    #             description TEXT NOT NULL,
+    #             responsibilities TEXT NOT NULL,
+    #             qualifications TEXT NOT NULL
+    #         );
+    #         """)
+
+    #     self.executeRawSql( 
+    #         """CREATE TABLE IF NOT EXISTS Match ( 
+    #             candidate_id VARCHAR(9) REFERENCES Candidate(candidate_id) 
+    #                 ON UPDATE CASCADE ON DELETE CASCADE 
+    #                 DEFERRABLE INITIALLY DEFERRED,
+    #             job_id VARCHAR(9) REFERENCES Job(job_id) 
+    #                 ON UPDATE CASCADE ON DELETE CASCADE 
+    #                 DEFERRABLE INITIALLY DEFERRED, 
+    #             score NUMERIC NOT NULL, 
+    #             PRIMARY KEY(candidate_id, job_id)
+    #          ); 
+    #          """)
+>>>>>>> a740c58feacef1e196277f808a8a7dc2292d4ba3
         

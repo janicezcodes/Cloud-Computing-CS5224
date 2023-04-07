@@ -9,3 +9,4 @@ pdfminer
 nltk
 scikit-learn
 base64
+json

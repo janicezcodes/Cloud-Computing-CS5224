@@ -1,8 +1,9 @@
 import random
 import string
-from flask import request, session, redirect, url_for, render_template, flash, Flask
+from flask import request, session, redirect, url_for, render_template, flash, Flask, render_template_string
 import boto3
 import base64
+import json
 
 import nltk
 import ssl
@@ -137,20 +138,19 @@ def upload_file():
                     
                     encoded_data = base64.b64encode(file_to_upload.read()).decode('utf-8')
 
-                    # add email and filename into postgreSQL
-                    # var_data = convert_from(decode('MTExMQ==', 'base64'), 'UTF8')  
-                    models.addEncodedPDF({"email": session.get('current_user_email'), "encoded_data": encoded_data}) #uncomment to use sql 
+                    # add email and filename into postgreSQL 
+                    candidate_name = models.getCandidateByEmail(session.get('current_user_email')).name
+                    models.addEncodedPDF({"name": candidate_name, "encoded_data": encoded_data})
 
                     # ---------------------------------------------------------------------------------
                     # calculate the matching scores and save to the RDS
-                    # resume = request.files.get('CV.pdf')
-                    # resume_txt = convert_pdf_2_text('/Users/apple/Documents/CS5224-TalentHunter/Apr5-clone/CS5224-TalentHunter/TalentHunter/src/CV.pdf')
+                    resume = request.files.get('CV.pdf')
+                    resume_txt = convert_pdf_2_text('/Users/apple/Documents/CS5224-TalentHunter/Apr5-clone/CS5224-TalentHunter/TalentHunter/src/CV.pdf')
                     resume_txt = convert_pdf_2_text(file_to_upload)
 
                     # get current user email
                     candidate_email = session.get('current_user_email')
 
-                    #uncomment below to use sql 
                     candidate_id = models.getCandidateByEmail(candidate_email) 
 
                     jobs = models.getJobDescription()    # <class 'list'>
@@ -196,23 +196,16 @@ def show_results():
     3. select candidate
     '''
     try:
-        if session['user_available']:
-            if request.method == 'GET':
-                title = session['search_title']
-                candidates_log = models.getMatchScoresByTitle(title)
-                # candidates_info = {}
-                # for log in candidates_log:
-                #     key = log.name # change this if wanna select by others
-                #     candidates_info[key] = log.email
-                # session['keyDict'] = candidates_info
-                return render_template('show_results.html', scores=candidates_log)
-            elif request.method == 'POST':
-                # HR select candidate, need to add button in html
-                selected_key = request.form['name']
-                # candidates_info = session.get('keyDict')
-                # email_selected = candidates_info['selected_key']
-                session['candidate_selected'] = selected_key
-                return redirect(url_for('display_cv_pdf'))
+        # if session['user_available']:
+        if request.method == 'GET':
+            title = session['search_title']
+            candidates_log = models.getMatchScoresByTitle(title)
+            return render_template('show_results.html', scores=candidates_log)
+        elif request.method == 'POST':
+            # HR select candidate, need to add button in html
+            selected_key = request.form['name']
+            session['candidate_selected'] = selected_key
+            return redirect(url_for('display_cv_pdf'))
         flash('You are not an Authenticated User')
         return redirect(url_for('index'))
     except Exception as e:
@@ -236,10 +229,7 @@ def convert_pdf_2_text(path):
 
     device.close()
     retstr.close()
-
     return text
-
-
 
     
 # Generate matching scores in percentage
@@ -257,10 +247,10 @@ def get_resume_score(text):
 def display_cv_pdf():
     if session['user_available']:
         candidate_selected = session.get('candidate_selected')
-        encoded_data = models.getEncodedPDF(candidate_selected)
-        return render_template("test.html", encoded_data=encoded_data)
-        # pdf_data = base64.b64decode(pdf_b64)
-        # return Response(pdf_data, mimetype='application/pdf')
+        encoded_data = models.getEncodedPDF(candidate_selected).encoded_data
+        data_url = 'data:application/pdf;base64,'+encoded_data
+        html = render_template_string('<embed src="{{ data_url }}" width="100%" height="100%" type="application/pdf">', data_url=data_url)
+        return html
 
 if __name__ == '__main__':
     app.run()

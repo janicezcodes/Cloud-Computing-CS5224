@@ -7,16 +7,16 @@ class Models:
     def __init__(self):
         # self.engine = create_engine(os.environ.get('DB_URL', 'postgresql://kln:1234@localhost:5432/th'))
         # replace the values below with your own AWS PostgreSQL database credentials
-        # DB_USER = 'talenthunter'
-        # DB_PASSWORD = 'talenthunter1234'
-        # DB_HOST = 'talenthunterdatabase.c01ff5x6d7j6.us-east-1.rds.amazonaws.com'
-        # DB_PORT = '5432'
-        # DB_NAME = 'talenthunterdatabase'
-        DB_USER = 'kln'
-        DB_PASSWORD = '12345678!'
-        DB_HOST = 'th.cfbp1vodyghp.us-east-1.rds.amazonaws.com'
+        DB_USER = 'talenthunter'
+        DB_PASSWORD = 'talenthunter1234'
+        DB_HOST = 'talenthunterdatabase.c01ff5x6d7j6.us-east-1.rds.amazonaws.com'
         DB_PORT = '5432'
-        DB_NAME = 'th'
+        DB_NAME = 'talenthunterdatabase'
+        # DB_USER = 'kln'
+        # DB_PASSWORD = '12345678!'
+        # DB_HOST = 'th.cfbp1vodyghp.us-east-1.rds.amazonaws.com'
+        # DB_PORT = '5432'
+        # DB_NAME = 'th'
 
         # create the database URI in the format postgresql://user:password@host:port/database_name
         DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
@@ -37,7 +37,7 @@ class Models:
         return self.executeRawSql("""INSERT INTO EncodedPDF(name, encoded_data) VALUES(:name, :encoded_data);""", value)
     
     def getEncodedPDF(self, name):
-        values = self.executeRawSql("""SELECT encoded_data FROM S3Files WHERE name=:name;""", {"name": name}).mappings().all()
+        values = self.executeRawSql("""SELECT encoded_data FROM EncodedPDF WHERE name=:name;""", {"name": name}).mappings().all()
         if len(values) == 0:
             raise Exception("CV file {} does not exist".format(name))
         return values[0]

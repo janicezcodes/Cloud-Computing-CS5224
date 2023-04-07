@@ -5,11 +5,27 @@
     SKELETON
 -------------------------------------------------------------------*/
 
-body {
+/* body {
     color: #999999;
     font-size: 14px;
     font-family: 'Open Sans', sans-serif;
     line-height: 1.80857;
+} */
+body {
+	background:#003366;
+	background-size: cover;
+	font-family: 'Open Sans', sans-serif;
+	background-attachment: fixed;
+    background-position: center;
+	line-height: 1.5;
+}
+
+h1{
+	color:#fff;
+	font-size:45px;
+	text-align:center;
+	margin-top:50px;
+	font-weight: 100;
 }
 
 body.demos .section-title img {
@@ -46,28 +62,26 @@ a {
     transition: all .3s ease-in-out;
 }
 
-h1,
+
 h2,
 h3,
 h4,
 h5,
 h6 {
     letter-spacing: 0;
-    font-weight: normal;
     position: relative;
-    padding: 0 0 10px 0;
+    padding: 0 0 3px 0;
     font-weight: normal;
     line-height: 120% !important;
     color: #333333;
     margin: 0
 }
 
-h1 {
-    font-size: 24px
-}
+
 
 h2 {
-    font-size: 22px
+    font-size: 22px;
+	color:rgb(255, 255, 255)
 }
 
 h3 {
@@ -216,7 +230,6 @@ html, body{
 .panel-login>.panel-heading a{
 	text-decoration: none;
 	color: #ffffff;
-	font-weight: bold;
 	font-size: 15px;
 	background: #efbd27;
 	padding: 10px 16px;

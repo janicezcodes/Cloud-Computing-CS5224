@@ -16,6 +16,9 @@ A sandbox application with Flask, SQLAlchemy and PostgreSQL
 - flask-WTF
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> a740c58feacef1e196277f808a8a7dc2292d4ba3
+=======
+>>>>>>> 2c34c7c443182f6da8a09a5bb2ec7cb46c4e006c

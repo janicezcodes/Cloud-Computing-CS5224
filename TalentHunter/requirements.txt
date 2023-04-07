@@ -8,3 +8,4 @@ boto3
 pdfminer
 nltk
 scikit-learn
+base64

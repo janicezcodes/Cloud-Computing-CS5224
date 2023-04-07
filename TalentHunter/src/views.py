@@ -2,6 +2,7 @@ import random
 import string
 from flask import request, session, redirect, url_for, render_template, flash, Flask
 import boto3
+import base64
 
 import nltk
 import ssl
@@ -67,7 +68,7 @@ def index():
                 elif password_login == log.password:     
                     session['current_user_email'] = em_login
                     session['user_available'] = True
-                    return redirect(url_for('upload_files_to_s3'))  
+                    return redirect(url_for('upload_file'))  
                 else:
                     flash('Cannot sign in. Email or password is wrong.')
                     return redirect(url_for('index'))
@@ -110,25 +111,8 @@ ALLOWED_EXTENSIONS = set(['pdf'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# upload file to S3 bucket
-def s3_upload_cv(file_to_upload, bucket, file_name, content_type):
-    s3_client = boto3.client('s3')
-    print('s3_client created')
-    try:
-        print('try upload s3')
-        response = s3_client.put_object(Body=file_to_upload,
-                                                Bucket=bucket,
-                                                Key=file_name,
-                                                ContentType=content_type)
-        #upload_file(file_to_upload, bucket, file_name)
-        print('after trying upload s3')
-        print(f" ** Response - {response}")
-    except Exception as e:
-        print('Error in uploading to s3, ', e)
-
-
 @app.route('/upload', methods=['GET', 'POST'])
-def upload_files_to_s3():
+def upload_file():
     try:
         if session['user_available']:
             print('user_available')
@@ -137,7 +121,7 @@ def upload_files_to_s3():
             elif request.method == 'POST':
                 print('file uploaded', request.files)
                 # No file selected
-                if 'fileselect[]' not in request.files:  # what the ‘file' defined in our html
+                if 'fileselect[]' not in request.files:  
                     flash(f' *** No files Selected', 'danger')
                 file_to_upload = request.files['fileselect[]']
                 content_type = request.mimetype
@@ -152,10 +136,12 @@ def upload_files_to_s3():
                     file_name = secure_filename(file_to_upload.filename)
                     print(f" *** The file name to upload is {file_name}")
                     print(f" *** The file full path  is {file_to_upload}")
+                    
+                    encoded_data = base64.b64encode(file_to_upload.read()).decode('utf-8')
 
-                    s3_upload_cv(file_to_upload, bucket_name, file_name, content_type)
                     # add email and filename into postgreSQL
-                    models.addS3File({"email": session.get('current_user_email'), "file_name": file_name}) #uncomment to use sql 
+                    # var_data = convert_from(decode('MTExMQ==', 'base64'), 'UTF8')  
+                    models.addEncodedPDF({"email": session.get('current_user_email'), "encoded_data": encoded_data}) #uncomment to use sql 
 
                     # ---------------------------------------------------------------------------------
                     # calculate the matching scores and save to the RDS
@@ -180,7 +166,7 @@ def upload_files_to_s3():
         return render_template('upload.html')    
     except Exception as e:
         flash(str(e))
-        return redirect(url_for('upload_files_to_s3'))
+        return redirect(url_for('upload_file'))
 
 
 # ------------------------------------------------------------------------------------------
@@ -199,34 +185,36 @@ def search_candidate():
 
 # ------------------------------------------------------------------------------------------
 
-@app.route('/show_results')
+@app.route('/show_results', methods=['GET', 'POST'])
 def show_results():
     '''
     1. sql query
     2. return result
-    3. get candidate selected
-    4. display S3 file
+    3. select candidate
     '''
     try:
         if session['user_available']:
-            title = session['search_title']
-            candidates_log = models.getMatchScoresByTitle(title)
-            candidates_show = []
-            # s3 = boto3.client('s3')
-            s3 = boto3.client("th-s3", aws_access_key_id=os.getenv('AWS_ACCESS_KEY'), aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
-
-            for log in candidates_log:
-                candidate_email = log.email
-                file_name = models.getS3FileName(candidate_email)
-                url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': file_name+'.pdf'}, ExpiresIn=3600)
-                log['s3_url'] = url
-                candidates_show.append(log)
-            return render_template('show_results.html', scores=candidates_show)
+            if request.method == 'GET':
+                title = session['search_title']
+                candidates_log = models.getMatchScoresByTitle(title)
+                # candidates_info = {}
+                # for log in candidates_log:
+                #     key = log.name # change this if wanna select by others
+                #     candidates_info[key] = log.email
+                # session['keyDict'] = candidates_info
+                return render_template('show_results.html', scores=candidates_log)
+            elif request.method == 'POST':
+                # HR select candidate, need to add button in html
+                selected_key = request.form['name']
+                # candidates_info = session.get('keyDict')
+                # email_selected = candidates_info['selected_key']
+                session['candidate_selected'] = selected_key
+                return redirect(url_for('display_cv_pdf'))
         flash('You are not an Authenticated User')
-        return redirect(url_for('login_and_reg'))
+        return redirect(url_for('index'))
     except Exception as e:
         flash(str(e))
-        return redirect(url_for('login_and_reg'))
+        return redirect(url_for('index'))
 
 
 # Read pdf file
@@ -258,7 +246,14 @@ def get_resume_score(text):
      
     return matchPercentage
 
-
+@app.route('/display_cv_pdf', methods=["GET"])
+def display_cv_pdf():
+    if session['user_available']:
+        candidate_selected = session.get('candidate_selected')
+        encoded_data = models.getEncodedPDF(candidate_selected)
+        return render_template("test.html", encoded_data=encoded_data)
+        # pdf_data = base64.b64decode(pdf_b64)
+        # return Response(pdf_data, mimetype='application/pdf')
 
 if __name__ == '__main__':
     app.run()

@@ -15,9 +15,3 @@ A sandbox application with Flask, SQLAlchemy and PostgreSQL
 - Flask-SQLAlchemy
 - flask-WTF
 
-
-### Update on Mar 22
-1. matching score计算放在views
-
-
-重新上传login UI

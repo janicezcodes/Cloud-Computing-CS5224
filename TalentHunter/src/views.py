@@ -22,8 +22,6 @@ from . forms import *
 from src import app
 
 import os
-# from flask_bootstrap import Bootstrap
-# from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
 import io
@@ -32,6 +30,7 @@ from pdfminer.converter import TextConverter
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfpage import PDFPage
+# from pdfminer.high_level import extract_text
 
 import re
 import operator
@@ -140,7 +139,6 @@ def upload_files_to_s3():
                 if 'fileselect[]' not in request.files:  # what the ‘file' defined in our html
                     flash(f' *** No files Selected', 'danger')
                 file_to_upload = request.files['fileselect[]']
-                content_type = request.mimetype
                 print('file_to_upload', file_to_upload)
                 print('file_name', file_to_upload.filename)
                 # if empty files
@@ -153,30 +151,36 @@ def upload_files_to_s3():
                     print(f" *** The file name to upload is {file_name}")
                     print(f" *** The file full path  is {file_to_upload}")
 
-                    s3_upload_cv(file_to_upload, bucket_name, file_name, content_type)
+                    # s3_upload_cv(file_to_upload, bucket_name, file_name, content_type)
                     # add email and filename into postgreSQL
-                    models.addS3File({"email": session.get('current_user_email'), "file_name": file_name}) #uncomment to use sql 
+                    # models.addS3File({"email": session.get('current_user_email'), "file_name": file_name}) #uncomment to use sql 
 
                     # ---------------------------------------------------------------------------------
                     # calculate the matching scores and save to the RDS
-                    resume = file_to_upload
+                    # resume = request.files.get('CV.pdf')
+                    # resume_txt = convert_pdf_2_text('/Users/apple/Documents/CS5224-TalentHunter/Apr5-clone/CS5224-TalentHunter/TalentHunter/src/CV.pdf')
+                    resume_txt = convert_pdf_2_text(file_to_upload)
+
                     # get current user email
                     candidate_email = session.get('current_user_email')
+
                     #uncomment below to use sql 
                     candidate_id = models.getCandidateByEmail(candidate_email) 
 
-                    jobs = models.getJobDescription() 
+                    jobs = models.getJobDescription()    # <class 'list'>
 
                     for job in jobs:
-                        full_jd = job.description.data + job.responsibilities.data + job.qualifications.data
-                        text = [resume, full_jd] 
+                        # type(job): <class 'sqlalchemy.engine.row.RowMapping'>
+                        full_jd = job['description'] + job['responsibilities'] + job['qualifications']
+                        text = [resume_txt,full_jd]
                         score = get_resume_score(text)
-                        models.addMatch({"candidate_id": candidate_id, "job_id": job.job_id.data, "score": score})
+                        models.addMatch({"candidate_id": candidate_id['candidate_id'], "job_id": job['job_id'], "score": score})
                     # ---------------------------------------------------------------------------------
                     flash(f'Success - {file_to_upload} Is uploaded to {bucket_name}', 'success')
 
                 else:
                     flash(f'Allowed file type is pdf.Please upload proper formats...', 'danger')   
+        return render_template('upload.html')    
     except Exception as e:
         flash(str(e))
         return redirect(url_for('upload_files_to_s3'))
@@ -211,7 +215,9 @@ def show_results():
             title = session['search_title']
             candidates_log = models.getMatchScoresByTitle(title)
             candidates_show = []
-            s3 = boto3.client('s3')
+            # s3 = boto3.client('s3')
+            s3 = boto3.client("th-s3", aws_access_key_id=os.getenv('AWS_ACCESS_KEY'), aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
+
             for log in candidates_log:
                 candidate_email = log.email
                 file_name = models.getS3FileName(candidate_email)
@@ -227,27 +233,31 @@ def show_results():
 
 
 # Read pdf file
-def read_pdf_resume(pdf_doc):
-    resource_manager = PDFResourceManager()
-    fake_file_handle = io.StringIO()
-    converter = TextConverter(resource_manager, fake_file_handle)
-    page_interpreter = PDFPageInterpreter(resource_manager, converter)
-    with open(pdf_doc, 'rb') as fh:
-        for page in PDFPage.get_pages(fh, caching=True,check_extractable=True):           
-            page_interpreter.process_page(page)     
-        text = fake_file_handle.getvalue() 
-    # close open handles      
-    converter.close() 
-    fake_file_handle.close() 
-    if text:     
-        return text
+def convert_pdf_2_text(path):
+
+    rsrcmgr = PDFResourceManager()
+    retstr = io.StringIO()
+
+    device = TextConverter(rsrcmgr, retstr)
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
+
+    with open(path, 'rb') as fp:
+        for page in PDFPage.get_pages(fp, set()):
+            interpreter.process_page(page)
+        text = retstr.getvalue()
+
+    device.close()
+    retstr.close()
+
+    return text
+
+
+
     
 # Generate matching scores in percentage
 def get_resume_score(text):
     cv = CountVectorizer(stop_words='english')
     count_matrix = cv.fit_transform(text)
-    #Print the similarity scores
-    print("\nSimilarity Scores:")
      
     #get the match percentage
     matchPercentage = cosine_similarity(count_matrix)[0][1] * 100

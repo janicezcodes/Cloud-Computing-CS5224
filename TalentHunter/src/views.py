@@ -144,9 +144,15 @@ def upload_file():
 
                     # ---------------------------------------------------------------------------------
                     # calculate the matching scores and save to the RDS
-                    resume = request.files.get('CV.pdf')
-                    resume_txt = convert_pdf_2_text('/Users/apple/Documents/CS5224-TalentHunter/Apr5-clone/CS5224-TalentHunter/TalentHunter/src/CV.pdf')
-                    resume_txt = convert_pdf_2_text(file_to_upload)
+                    # resume = request.files.get('CV.pdf')
+                    # cv_path = os.path.join(file_name)
+                    # print(cv_path)
+
+                    resume_txt = convert_pdf_2_text('/Users/apple/Documents/CS5224-TalentHunter/Apr8-clone/CS5224-TalentHunter/TalentHunter/src/CV.pdf')
+                    # resume_txt = convert_pdf_2_text(cv_path)
+                    # f = file_to_upload.read()
+                    # resume_txt = convert_pdf_2_text(f)
+                    # print(type(f))
 
                     # get current user email
                     candidate_email = session.get('current_user_email')
@@ -162,7 +168,7 @@ def upload_file():
                         score = get_resume_score(text)
                         models.addMatch({"candidate_id": candidate_id['candidate_id'], "job_id": job['job_id'], "score": score})
                     # ---------------------------------------------------------------------------------
-                    flash(f'Success - {file_to_upload} Is uploaded to {bucket_name}', 'success')
+                    flash(f'Success - {file_name} Is uploaded to {bucket_name}', 'success')
 
                 else:
                     flash(f'Allowed file type is pdf.Please upload proper formats...', 'danger')   
@@ -178,7 +184,7 @@ def search_candidate():
     ''' get selected job'''
    
     #  这里用户需要选择title，然后去数据库查找，所以methods=['GET', 'POST']
-    if request.method == 'POST': 
+    if request.method == 'GET' and request.values.get('title')!= None: 
         title = request.values.get('title')
         session['user_available'] = True    # to generate results in the next page
         session['search_title'] = title
@@ -196,18 +202,17 @@ def show_results():
     3. select candidate
     '''
     try:
-        # if session['user_available']:
-        if request.method == 'GET':
+        # if request.method == 'GET':
+        if session['user_available']:
             title = session['search_title']
             candidates_log = models.getMatchScoresByTitle(title)
-            return render_template('show_results.html', scores=candidates_log)
-        elif request.method == 'POST':
-            # HR select candidate, need to add button in html
-            selected_key = request.form['name']
-            session['candidate_selected'] = selected_key
-            return redirect(url_for('display_cv_pdf'))
-        flash('You are not an Authenticated User')
-        return redirect(url_for('index'))
+            print(candidates_log)
+            if request.method == 'POST':
+                # HR select candidate, need to add button in html
+                selected_key = request.form['name']
+                session['candidate_selected'] = selected_key
+                return redirect(url_for('display_cv_pdf'))
+        return render_template('show_results.html', scores=candidates_log)
     except Exception as e:
         flash(str(e))
         return redirect(url_for('index'))
@@ -225,7 +230,13 @@ def convert_pdf_2_text(path):
     with open(path, 'rb') as fp:
         for page in PDFPage.get_pages(fp, set()):
             interpreter.process_page(page)
+            print(type(page))
         text = retstr.getvalue()
+
+    # for page in PDFPage.get_pages(fp, set()):
+    #     interpreter.process_page(page)
+    #     print(type(page))
+    # text = retstr.getvalue()
 
     device.close()
     retstr.close()

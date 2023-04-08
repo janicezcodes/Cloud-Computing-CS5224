@@ -36,12 +36,12 @@
     {% for s in scores %}
       <div class="panel panel-info" >
         <div class="panel-heading">
-          <div><h3 class="panel-title" style="color: #efbd27;"> <i>Candidate{{i.name}}</i> for {{s.title}} (Job ID: {{s.job_id}})</h3></div>
+          <div><h3 class="panel-title" style="color: #efbd27;"> <i>Candidate {{s.name}}</i> for {{s.title}} (Job ID: {{s.job_id}})</h3></div>
         </div>
         <div class="panel-body" style="color: 212121;">
-          <p>Candidate Name: {{i.name}}</p>
-          <p>Email: {{i.email}}</p>
-          <p>CV Link: {{i.s3_url}}</p>
+          <p>Candidate Name: {{s.name}}</p>
+          <p>Email: {{s.email}}</p>
+          <p>Score: {{s.score}}</p>
         </div>
       </div>
     {% endfor %}
@@ -59,6 +59,11 @@
       </div>
       </div>
   </form>
+  {% for message in get_flashed_messages() %}
+  {% if message %}
+  {{message}}
+  {% endif %}
+  {% endfor %}
 
   <div class="footer">
     <p> © 2016-2022 TalentHunter. All Rights Reserved</p>

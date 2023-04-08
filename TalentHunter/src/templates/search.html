@@ -28,14 +28,14 @@
 				<h3 for="lang">Choose a job:</h3>
 				<select name="title" id="lang">
 					<option value="select">Select a job</option>
-					<option value="software-engineering">Software Engineering</option>
-					<option value="data-analytics">Data Analytics</option>
-					<option value="finance">Finance</option>
-					<option value="designer">Designer</option>
-				  	<option value="hr">HR</option>
-				  	<option value="marketing">Marketing</option>  	
-				  	<option value="product-manager">Product Manager</option>
-				  	<option value="sales">Sales</option>
+					<option value="Software Engineering">Software Engineering</option>
+					<option value="Data Analytics">Data Analytics</option>
+					<option value="Finance">Finance</option>
+					<option value="Designer">Designer</option>
+				  	<option value="HR">HR</option>
+				  	<option value="Marketing">Marketing</option>  	
+				  	<option value="Product Manager">Product Manager</option>
+				  	<option value="Sales">Sales</option>
 				</select>
 				<p></p>
 				<p></p>
@@ -46,6 +46,11 @@
 		<!-- <script src="../src/static/search_js/filedrag.js"></script> -->
 		<!-- </div> -->
 	</div>
+	{% for message in get_flashed_messages() %}
+	{% if message %}
+	{{message}}
+	{% endif %}
+	{% endfor %}
 
 <div class="footer">
 	<p> © 2016-2022 TalentHunter. All Rights Reserved</p>

@@ -8,5 +8,5 @@ boto3
 pdfminer
 nltk
 scikit-learn
-# base64
-# json
+PyPDF2
+pdfminer.six

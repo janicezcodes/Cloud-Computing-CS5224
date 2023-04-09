@@ -3,7 +3,8 @@ import string
 from flask import request, session, redirect, url_for, render_template, flash, Flask, render_template_string
 import boto3
 import base64
-import json
+from io import BytesIO
+import PyPDF2
 
 import nltk
 import ssl
@@ -32,7 +33,7 @@ from pdfminer.converter import TextConverter
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfpage import PDFPage
-# from pdfminer.high_level import extract_text
+from pdfminer.high_level import extract_text_to_fp
 
 import re
 import operator
@@ -136,7 +137,8 @@ def upload_file():
                     print(f" *** The file name to upload is {file_name}")
                     print(f" *** The file full path  is {file_to_upload}")
                     
-                    encoded_data = base64.b64encode(file_to_upload.read()).decode('utf-8')
+                    read_file = file_to_upload.read()
+                    encoded_data = base64.b64encode(read_file).decode('utf-8')
 
                     # add email and filename into postgreSQL 
                     candidate_name = models.getCandidateByEmail(session.get('current_user_email')).name
@@ -144,15 +146,19 @@ def upload_file():
 
                     # ---------------------------------------------------------------------------------
                     # calculate the matching scores and save to the RDS
-                    # resume = request.files.get('CV.pdf')
-                    # cv_path = os.path.join(file_name)
-                    # print(cv_path)
+                    pdf_io = BytesIO(read_file)
 
-                    resume_txt = convert_pdf_2_text('/Users/apple/Documents/CS5224-TalentHunter/Apr8-clone/CS5224-TalentHunter/TalentHunter/src/CV.pdf')
-                    # resume_txt = convert_pdf_2_text(cv_path)
-                    # f = file_to_upload.read()
-                    # resume_txt = convert_pdf_2_text(f)
-                    # print(type(f))
+                    # Use PyPDF2 to get the number of pages in the PDF file
+                    pdf_reader = PyPDF2.PdfReader(pdf_io)
+                    num_pages = len(pdf_reader.pages)
+
+                    # Use pdfminer to extract the text from each page of the PDF file
+                    resume_txt = ""
+                    for i in range(num_pages):
+                        with BytesIO() as outfp:
+                            extract_text_to_fp(pdf_io, page_numbers=[i], outfp=outfp)
+                            page_text = outfp.getvalue().decode()
+                            resume_txt += page_text
 
                     # get current user email
                     candidate_email = session.get('current_user_email')

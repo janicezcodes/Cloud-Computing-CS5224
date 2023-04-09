@@ -123,6 +123,7 @@ INSERT INTO Job VALUES ('P11111117', 'Sales','2023/03/22', 'full-time','New Busi
 
 INSERT INTO Candidate VALUES ('111111111', 'kln', 'kln@gmail.com', '12345678');
 -- INSERT INTO Candidate VALUES ('222222222', 'test', 'abc@gmail.com', '12345678');
+INSERT INTO Candidate VALUES ('777777777', 'zyf', '', '12345678');zyf@gmail.com
 
 INSERT INTO Candidate VALUES ('000000000', 'admin', 'admin@gmail.com', '12345678');
 
